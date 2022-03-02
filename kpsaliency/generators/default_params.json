@@ -1,0 +1,10 @@
+{
+  "lower_direct": 0.7,
+  "upper_direct": 1.0,
+  "lower_indirect": 0.8,
+  "upper_indirect": 1.0,
+  "n": 10,
+  "sigma": 0.0,
+  "selem_size": 3,
+  "kernel_size": 300
+}
