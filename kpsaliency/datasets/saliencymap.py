@@ -18,10 +18,28 @@ from kpsaliency.generators import KPBMSGenerator
 from kpsaliency.utils.misc import handle_pbar
 
 
+def collate_fn(data):
+    """
+    Custom collate_fn function for DataLoader objects working with the SaliencyMapDataset class.
+    :returns:
+        imgs - np.ndarray of shape [batch_size, height, width, channels]    containing the input images.
+        smaps_direct - np.ndarray of shape [batch_size, height, width] containing the direct saliency maps.
+        smaps_indirect - np.ndarray of shape [batch_size, height, width] containing the indirect saliency maps.
+        infos - list of batch_size items of types pvdn.ImageInformation containing information of each image.
+        vehicles - list of batch_size items of types pvdn.Vehicle containing information about the keypoint annotations for each image.
+    """
+    imgs, smaps_direct, smaps_indirect, infos, vehicles = zip(*data)
+    imgs = np.stack(imgs, axis=0)
+    smaps_indirect = np.stack(smaps_indirect, axis=0)
+    smaps_direct = np.stack(smaps_direct, axis=0)
+    
+    return imgs, smaps_direct, smaps_indirect, infos, vehicles
+
+
 class SaliencyMapDataset(PVDNDataset):
     def __init__(self, path: str,
                  filters: List[Any] = [], transform: List[Any] = None,
-                 read_annots: bool = True, load_images: bool = False,
+                 read_annots: bool = True, load_images: bool = True,
                  keypoints_path: str = None
                  ):
         super().__init__(path, filters, transform, read_annots, load_images=load_images,
@@ -126,10 +144,10 @@ class SaliencyMapDataset(PVDNDataset):
         img, info, vehicles = super().__getitem__(idx)
         smap_direct = cv2.imread(os.path.join(
             self.smap_path_direct, info.sequence.directory, info.file_name
-        ))
+        ), 0)
         smap_indirect = cv2.imread(os.path.join(
             self.smap_path_indirect, info.sequence.directory, info.file_name
-        ))
+        ), 0)
 
         return img, smap_direct, smap_indirect, info, vehicles
 

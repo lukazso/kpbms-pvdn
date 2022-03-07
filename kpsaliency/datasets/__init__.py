@@ -1,1 +1,1 @@
-from .saliencymap import SaliencyMapDataset
+from .saliencymap import *
