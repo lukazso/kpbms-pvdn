@@ -7,7 +7,10 @@ def clamp(l: int, h: int, v: int):
 
 def determine_regional_val(selem: np.array, img: np.array, x: int, y: int,
                            method: str = "max"):
-    """ supporded methods are min, max, mean """
+    """ 
+    supporded methods are min, max, mean 
+    :return: returns value and coordinate (x, y)
+    """
     # calculate window
     H, W = img.shape[-2:]
     h, w = selem.shape
@@ -23,12 +26,21 @@ def determine_regional_val(selem: np.array, img: np.array, x: int, y: int,
     # mask region with selem
     reg *= selem
 
+    v, coord = None, None
     if method == "min":
-        return np.min(reg)
+        v = np.min(reg)
+        coord = np.array(np.unravel_index(np.argmin(reg), shape=(h, w)))
+        coord += [i_min, j_min]
+    
     elif method == "max":
-        return np.max(reg)
+        v = np.min(reg)
+        coord = np.array(np.unravel_index(np.argmax(reg), shape=(h, w)))
+        coord += [i_min, j_min]
+
     elif method == "mean":
-        return reg.sum() / selem.sum()
+        v = reg.sum() / selem.sum()
     else:
         raise KeyError(f"{method} is not supported. Supported methods are 'min', "
                        f"'max' and 'mean'.")
+
+    return v, coord

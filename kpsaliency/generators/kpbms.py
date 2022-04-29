@@ -122,7 +122,10 @@ class KPBMSGenerator(SaliencyGenerator):
 
         # ==== 1. step: specify search range and values based on kp ====
         # sample intensity value around position of instance and make sure that value is within [1,254]
-        val = determine_regional_val(self.selem, img.copy(), ix, iy, method="max")
+        val, coord = determine_regional_val(self.selem, img.copy(), ix, iy, method="max")
+
+        # update ix, iy to the new coordinates where the regional value was determined
+        ix, iy = coord
 
         # calculate bounds around this intensity
         lower_bound = int(
