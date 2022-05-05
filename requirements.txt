@@ -1,0 +1,15 @@
+numpy==1.20.1
+
+opencv-contrib-python==4.5.1.48
+opencv-python==4.5.1.48
+
+pandas==1.2.4
+
+pvdn @ git+https://git@github.com/larsOhne/pvdn.git
+
+scikit-image==0.18.1
+scipy==1.6.1
+
+tqdm==4.62.3
+typing-extensions==3.7.4.3
+hyperopt==0.2.7
