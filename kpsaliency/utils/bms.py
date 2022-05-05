@@ -33,7 +33,7 @@ def determine_regional_val(selem: np.array, img: np.array, x: int, y: int,
         coord += [i_min, j_min]
     
     elif method == "max":
-        v = np.min(reg)
+        v = np.max(reg)
         coord = np.array(np.unravel_index(np.argmax(reg), shape=(h, w)))
         coord += [i_min, j_min]
 
