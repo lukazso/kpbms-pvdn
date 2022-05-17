@@ -1,7 +1,7 @@
 numpy==1.20.1
 
-opencv-contrib-python==4.5.1.48
-opencv-python==4.5.1.48
+opencv-contrib-python
+opencv-python
 
 pandas==1.2.4
 
