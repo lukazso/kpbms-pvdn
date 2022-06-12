@@ -1,6 +1,6 @@
 from typing import List
 import numpy as np
-from cv2 import cv2
+import cv2
 
 from pvdn import Vehicle, Instance
 

@@ -3,7 +3,7 @@ from typing import List
 import os
 import json
 
-import cv2.cv2
+import cv2
 from pvdn import Instance
 
 from kpsaliency.generators.generator import SaliencyGenerator
@@ -127,6 +127,9 @@ class KPBMSGenerator(SaliencyGenerator):
         # update ix, iy to the new coordinates where the regional value was determined
         ix, iy = coord
 
+        assert ix < w
+        assert iy < h
+
         # calculate bounds around this intensity
         lower_bound = int(
             val * self.lower_direct if direct else val * self.lower_indirect)
@@ -178,8 +181,8 @@ class KPBMSGenerator(SaliencyGenerator):
 
             # update overall b map
             b_maps[i] = b_map
-
-        kp_s_map = np.mean(b_maps, axis=0)
+        with np.errstate(invalid='ignore'):
+            kp_s_map = np.mean(b_maps, axis=0)
 
         return kp_s_map
 
@@ -197,7 +200,7 @@ class KPBMSGenerator(SaliencyGenerator):
         h, w = image.shape[:2]
 
         # blurr image
-        img = cv2.cv2.GaussianBlur(image, (21, 5), 0)
+        img = cv2.GaussianBlur(image, (21, 5), 0)
         img = cv2.normalize(img, None, 0, 255, cv2.NORM_MINMAX)
 
         s_maps = []

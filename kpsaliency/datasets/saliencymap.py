@@ -91,10 +91,11 @@ class SaliencyMapDataset(PVDNDataset):
         desc = "Generating saliency map dataset"
         pbar_proc = mp.Process(target=handle_pbar, args=(pbar_queue, total, desc))
         pbar_proc.start()
-
+        #
         processes = [mp.Process(target=SaliencyMapDataset._generate_dataset_batch,
                                 args=(self, batch, bms_generator, pbar_queue))
                      for batch in batches]
+
         for p in processes:
             p.start()
         for p in processes:
@@ -108,7 +109,6 @@ class SaliencyMapDataset(PVDNDataset):
         _bms_generator = bms_generator
         for i in idxs:
             img, info, vehicles = super().__getitem__(i)
-
             if type(bms_generator) is dict:
                 _bms_generator = bms_generator[info.sequence.directory]
 
