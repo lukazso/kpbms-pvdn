@@ -1,1 +1,2 @@
-from kpsaliency.generators.kpbms import KPBMSGenerator
+from .kpbms import KPBMSGenerator
+from .bboxes import KPBMSBoxGenerator
