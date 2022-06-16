@@ -126,29 +126,6 @@ class KPBMSGenerator(SaliencyGenerator):
 
         # update ix, iy to the new coordinates where the regional value was determined
         ix, iy = coord
-
-        assert ix < w
-        assert iy < h
-
-        # calculate bounds around this intensity
-        lower_bound = int(
-            val * self.lower_direct if direct else val * self.lower_indirect)
-        upper_bound = int(
-            val * self.upper_direct if direct else val * self.upper_indirect)
-
-        # clamp bound so they stay within [0,255]
-        lower_bound = clamp(0, val - 1, lower_bound)
-        upper_bound = clamp(val + 1, 255, upper_bound)
-
-        # specify threshold values
-        # theta = np.arange(lower_bound, upper_bound, self.n)
-        theta = np.linspace(lower_bound, upper_bound, self.n)
-
-        # ==== 2. step create boolean maps ====
-        b_maps = np.zeros(shape=(theta.shape[0], h, w), dtype=bool)
-
-        # ==== 3. step make gaussian window around keypoint to avoid huge saliency
-        # blobs ====
         if not self.kernel_size:
             _img = img
         else:
@@ -168,12 +145,39 @@ class KPBMSGenerator(SaliencyGenerator):
             kernel_mask[iy - kh_low:iy + kh_high, ix - kw_low:ix + kw_high] += _kernel
             _img = (img.copy() * kernel_mask).astype(np.uint8)
 
+        val = _img[iy, ix]
+        img = _img
+
+        assert ix < w
+        assert iy < h
+
+        # calculate bounds around this intensity
+        lower_bound = int(
+            val * self.lower_direct if direct else val * self.lower_indirect)
+        upper_bound = int(
+            val * self.upper_direct if direct else val * self.upper_indirect)
+
+        # clamp bound so they stay within [0,255]
+        lower_bound = clamp(0, val - 1, lower_bound)
+        upper_bound = clamp(val, 255, upper_bound)
+
+        # specify threshold values
+        # theta = np.arange(lower_bound, upper_bound, self.n)
+        theta = np.linspace(lower_bound, upper_bound, self.n)
+
+        # ==== 2. step create boolean maps ====
+        b_maps = np.zeros(shape=(theta.shape[0], h, w), dtype=bool)
+
+        # ==== 3. step make gaussian window around keypoint to avoid huge saliency
+        # blobs ====
+        _img = img
+
         # create boolean masks
         for i, t in enumerate(theta):
             # calculate binary mask for given threshold
             b_map = np.zeros(shape=(img.shape[0], img.shape[1]))
 
-            b_map[:, :] = _img > np.ones_like(_img) * t
+            b_map[:, :] = _img >= np.ones_like(_img) * t
 
             # flood fill algorithm from KP
             mask = (flood(b_map, (iy, ix)))
