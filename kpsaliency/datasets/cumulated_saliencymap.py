@@ -1,13 +1,9 @@
 # common libraries
-import json
 import os
-import time
 from typing import List, Any, Union, Dict
 from tqdm import tqdm
-
 import numpy as np
 import cv2
-from skimage.morphology import disk
 import multiprocessing as mp
 
 # pvdn dependencies
@@ -16,11 +12,12 @@ from pvdn import PVDNDataset
 # own library dependencies
 from kpsaliency.generators import KPBMSGenerator
 from kpsaliency.utils.misc import handle_pbar
+from kpsaliency.utils.transforms import Resize
 
 
-def collate_fn(data):
+def cumulated_collate_fn(data):
     """
-    Custom collate_fn function for DataLoader objects working with the SaliencyMapDataset class.
+    Custom collate_fn function for DataLoader objects working with the CumulatedSaliencyMapDataset class.
     :returns:
         imgs - np.ndarray of shape [batch_size, height, width, channels]    containing the input images.
         smaps_direct - np.ndarray of shape [batch_size, height, width] containing the direct saliency maps.
@@ -36,11 +33,11 @@ def collate_fn(data):
     return imgs, smaps_direct, smaps_indirect, infos, vehicles
 
 
-class SaliencyMapDataset(PVDNDataset):
+class CumulatedSaliencyMapDataset(PVDNDataset):
     def __init__(self, path: str,
                  filters: List[Any] = [], transform: List[Any] = None,
                  read_annots: bool = True, load_images: bool = True,
-                 keypoints_path: str = None
+                 keypoints_path: str = None, resize_factor=1,
                  ):
         super().__init__(path, filters, transform, read_annots, load_images=load_images,
                          keypoints_path=keypoints_path)
@@ -48,7 +45,7 @@ class SaliencyMapDataset(PVDNDataset):
         self.smap_path = os.path.join(self.base_path, "saliency_maps")
         self.smap_path_direct = os.path.join(self.smap_path, "direct")
         self.smap_path_indirect = os.path.join(self.smap_path, "indirect")
-
+        self.resize_factor = resize_factor
         self.dataset_exists = True
 
         if not os.path.isdir(self.smap_path):
@@ -75,7 +72,7 @@ class SaliencyMapDataset(PVDNDataset):
             os.makedirs(os.path.join(self.smap_path_indirect, scene.directory),
                         exist_ok=True)
 
-        params_path = os.path.join(self.smap_path, "params.json")
+        # params_path = os.path.join(self.smap_path, "params.json")
         # with open(params_path, "w") as f:
         #     json.dump(bms_generator.params, f)
         # print(f"Written parameters to {params_path}.")
@@ -92,7 +89,7 @@ class SaliencyMapDataset(PVDNDataset):
         pbar_proc = mp.Process(target=handle_pbar, args=(pbar_queue, total, desc))
         pbar_proc.start()
         #
-        processes = [mp.Process(target=SaliencyMapDataset._generate_dataset_batch,
+        processes = [mp.Process(target=CumulatedSaliencyMapDataset._generate_dataset_batch,
                                 args=(self, batch, bms_generator, pbar_queue))
                      for batch in batches]
 
@@ -112,6 +109,10 @@ class SaliencyMapDataset(PVDNDataset):
             if type(bms_generator) is dict:
                 _bms_generator = bms_generator[info.sequence.directory]
 
+            # resize image and vehicles
+            resize = Resize(self.resize_factor)
+            img, vehicles = resize(img, vehicles)
+
             direct_kps = []
             indirect_kps = []
 
@@ -122,21 +123,21 @@ class SaliencyMapDataset(PVDNDataset):
                     else:
                         indirect_kps.append(instance)
 
-            direct_smaps = _bms_generator.generate_cumulated_sm(img, direct_kps)
+            direct_smap = _bms_generator.generate_cumulated_sm(img, direct_kps)
 
-            indirect_smaps = _bms_generator.generate_cumulated_sm(img, indirect_kps)
+            indirect_smap = _bms_generator.generate_cumulated_sm(img, indirect_kps)
 
             # convert maps to uint8 [0, 255]
-            direct_smaps = (direct_smaps * 255).astype(np.uint8)
-            indirect_smaps = (indirect_smaps * 255).astype(np.uint8)
+            direct_smap = (direct_smap * 255).astype(np.uint8)
+            indirect_smap = (indirect_smap * 255).astype(np.uint8)
 
             # save maps
             cv2.imwrite(
                 os.path.join(self.smap_path_direct, info.sequence.directory,
-                             info.file_name), direct_smaps)
+                             info.file_name), direct_smap)
             cv2.imwrite(
                 os.path.join(self.smap_path_indirect, info.sequence.directory,
-                             info.file_name), indirect_smaps)
+                             info.file_name), indirect_smap)
 
             pbar_queue.put(1)
 
@@ -148,8 +149,10 @@ class SaliencyMapDataset(PVDNDataset):
         smap_indirect = cv2.imread(os.path.join(
             self.smap_path_indirect, info.sequence.directory, info.file_name
         ), 0)
+        resize = Resize(self.resize_factor)
+        resized_img, resized_vehicles = resize(img, vehicles)
 
-        return img, smap_direct, smap_indirect, info, vehicles
+        return resized_img, smap_direct, smap_indirect, info, resized_vehicles
 
 
 if __name__ == "__main__":
@@ -172,7 +175,7 @@ if __name__ == "__main__":
             scene = file.split("/")[-1].split(".")[0]
             generators[scene] = KPBMSGenerator.from_json(file)
 
-        dataset = SaliencyMapDataset(
+        dataset = CumulatedSaliencyMapDataset(
             path=path
         )
         dataset.generate_dataset(bms_generator=generators, n_workers=7)
