@@ -31,6 +31,7 @@ def separate_collate_fn(data):
 
 
 class SeparateSaliencyMapDataset(PVDNDataset):
+    """Dataset for saliency maps as a single saliency map per annotated keypoint"""
     def __init__(self, path: str,
                  filters: List[Any] = [], transform: List[Any] = None,
                  read_annots: bool = True, load_images: bool = True,
@@ -39,7 +40,7 @@ class SeparateSaliencyMapDataset(PVDNDataset):
         super().__init__(path, filters, transform, read_annots, load_images=load_images,
                          keypoints_path=keypoints_path)
 
-        self.smap_path = os.path.join(self.base_path, "saliency_maps")
+        self.smap_path = os.path.join(self.base_path, "separate_saliency_maps")
         self.smap_path_direct = os.path.join(self.smap_path, "direct")
         self.smap_path_indirect = os.path.join(self.smap_path, "indirect")
         self.resize_factor = resize_factor
@@ -69,10 +70,6 @@ class SeparateSaliencyMapDataset(PVDNDataset):
             os.makedirs(os.path.join(self.smap_path_indirect, scene.directory),
                         exist_ok=True)
 
-        # params_path = os.path.join(self.smap_path, "params.json")
-        # with open(params_path, "w") as f:
-        #     json.dump(bms_generator.params, f)
-        # print(f"Written parameters to {params_path}.")
         print(f"Running with {n_workers} workers.")
         total = len(self)
         batch_size = total // n_workers

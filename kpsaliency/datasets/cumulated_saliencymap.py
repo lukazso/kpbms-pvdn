@@ -34,6 +34,8 @@ def cumulated_collate_fn(data):
 
 
 class CumulatedSaliencyMapDataset(PVDNDataset):
+    """Dataset for saliency maps as a cumulated saliency map per class (one for
+    all direct and one for all indirect instances per image)"""
     def __init__(self, path: str,
                  filters: List[Any] = [], transform: List[Any] = None,
                  read_annots: bool = True, load_images: bool = True,
@@ -41,8 +43,7 @@ class CumulatedSaliencyMapDataset(PVDNDataset):
                  ):
         super().__init__(path, filters, transform, read_annots, load_images=load_images,
                          keypoints_path=keypoints_path)
-
-        self.smap_path = os.path.join(self.base_path, "saliency_maps")
+        self.smap_path = os.path.join(self.base_path, "cumulated_saliency_maps")
         self.smap_path_direct = os.path.join(self.smap_path, "direct")
         self.smap_path_indirect = os.path.join(self.smap_path, "indirect")
         self.resize_factor = resize_factor
