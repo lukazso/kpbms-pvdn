@@ -1,13 +1,13 @@
 # common libraries
 import os
-from typing import List, Any, Union, Dict
+from typing import List, Any, Union, Dict, Tuple
 from tqdm import tqdm
 import numpy as np
 import cv2
 import multiprocessing as mp
 
 # pvdn dependencies
-from pvdn import PVDNDataset
+from pvdn import PVDNDataset, Vehicle, ImageInformation
 
 # own library dependencies
 from kpsaliency.generators import KPBMSGenerator
@@ -142,7 +142,8 @@ class CumulatedSaliencyMapDataset(PVDNDataset):
 
             pbar_queue.put(1)
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx) -> Tuple[Union[np.array, None], np.array, np.array,
+                                        ImageInformation, Vehicle]:
         img, info, vehicles = super().__getitem__(idx)
         smap_direct = cv2.imread(os.path.join(
             self.smap_path_direct, info.sequence.directory, info.file_name

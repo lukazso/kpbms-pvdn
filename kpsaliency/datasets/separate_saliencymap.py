@@ -1,12 +1,12 @@
 # common libraries
 import os
-from typing import List, Any, Union, Dict
+from typing import List, Any, Union, Dict, Tuple
 from tqdm import tqdm
 import numpy as np
 import multiprocessing as mp
 
 # pvdn dependencies
-from pvdn import PVDNDataset
+from pvdn import PVDNDataset, Vehicle, ImageInformation
 
 # own library dependencies
 from kpsaliency.generators import KPBMSGenerator
@@ -129,7 +129,8 @@ class SeparateSaliencyMapDataset(PVDNDataset):
 
             pbar_queue.put(1)
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx) -> Tuple[Union[np.array, None], np.array, np.array,
+                                        ImageInformation, Vehicle]:
         img, info, vehicles = super().__getitem__(idx)
         smaps_direct = np.load(os.path.join(
             self.smap_path_direct, info.sequence.directory, f"{info.file_name.split('.')[0]}.npy"
