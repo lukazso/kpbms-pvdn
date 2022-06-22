@@ -139,7 +139,12 @@ class SeparateSaliencyMapDataset(PVDNDataset):
             self.smap_path_indirect, info.sequence.directory, f"{info.file_name.split('.')[0]}.npy"
         ))
         resize = Resize(self.resize_factor)
-        resized_img, resized_vehicles = resize(img, vehicles)
+
+        if self.load_images:
+            resized_img, resized_vehicles = resize(img, vehicles)
+        else:
+            resized_img = img
+            resized_vehicles = vehicles
 
         return resized_img, smaps_direct, smaps_indirect, info, resized_vehicles
 
