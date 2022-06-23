@@ -47,6 +47,7 @@ class CumulatedSaliencyMapDataset(PVDNDataset):
         self.smap_path_direct = os.path.join(self.smap_path, "direct")
         self.smap_path_indirect = os.path.join(self.smap_path, "indirect")
         self.resize_factor = resize_factor
+        self.resize = Resize(self.resize_factor)
         self.dataset_exists = True
 
         if not os.path.isdir(self.smap_path):
@@ -151,8 +152,12 @@ class CumulatedSaliencyMapDataset(PVDNDataset):
         smap_indirect = cv2.imread(os.path.join(
             self.smap_path_indirect, info.sequence.directory, info.file_name
         ), 0)
-        resize = Resize(self.resize_factor)
-        resized_img, resized_vehicles = resize(img, vehicles)
+
+        if self.load_images:
+            resized_img, resized_vehicles = self.resize(img, vehicles)
+        else:
+            resized_img = img
+            resized_vehicles = vehicles
 
         return resized_img, smap_direct, smap_indirect, info, resized_vehicles
 

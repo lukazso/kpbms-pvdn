@@ -44,6 +44,7 @@ class SeparateSaliencyMapDataset(PVDNDataset):
         self.smap_path_direct = os.path.join(self.smap_path, "direct")
         self.smap_path_indirect = os.path.join(self.smap_path, "indirect")
         self.resize_factor = resize_factor
+        self.resize = Resize(self.resize_factor)
         self.dataset_exists = True
 
         if not os.path.isdir(self.smap_path):
@@ -121,6 +122,9 @@ class SeparateSaliencyMapDataset(PVDNDataset):
 
             indirect_smaps = _bms_generator.generate_single_bm(img, indirect_kps)
 
+            h, w = img.shape
+            direct_smaps = np.array(direct_smaps).reshape(-1, h, w)
+            indirect_smaps = np.array(indirect_smaps).reshape(-1, h, w)
             # save maps
             np.save(os.path.join(self.smap_path_direct, info.sequence.directory,
                              info.file_name.split('.')[0]), direct_smaps)
@@ -138,10 +142,9 @@ class SeparateSaliencyMapDataset(PVDNDataset):
         smaps_indirect = np.load(os.path.join(
             self.smap_path_indirect, info.sequence.directory, f"{info.file_name.split('.')[0]}.npy"
         ))
-        resize = Resize(self.resize_factor)
 
         if self.load_images:
-            resized_img, resized_vehicles = resize(img, vehicles)
+            resized_img, resized_vehicles = self.resize(img, vehicles)
         else:
             resized_img = img
             resized_vehicles = vehicles
@@ -153,7 +156,8 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--data-path", type=str,
-                        default="/raid/datasets/PVDN_Dataset/PVDN/day")
+                        default="/home/lukas/Development/datasets/PVDN"
+                                "/day")
     opts = parser.parse_args()
 
     for split in ("test", "val", "train"):
