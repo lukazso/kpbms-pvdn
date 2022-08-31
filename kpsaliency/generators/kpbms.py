@@ -88,6 +88,7 @@ class KPBMSGenerator(SaliencyGenerator):
         # read config from json
         with open(config_path, "r") as f:
             params = json.load(f)
+            params = params
 
         selem = disk(params["selem_size"])
 
@@ -204,7 +205,7 @@ class KPBMSGenerator(SaliencyGenerator):
         h, w = image.shape[:2]
 
         # blurr image
-        img = cv2.GaussianBlur(image, (21, 5), 0)
+        img = cv2.GaussianBlur(image, (21, 5), self.sigma)
         img = cv2.normalize(img, None, 0, 255, cv2.NORM_MINMAX)
 
         s_maps = []
